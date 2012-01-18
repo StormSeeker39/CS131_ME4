@@ -65,12 +65,19 @@ public:
 		return t;
 	}
 
+	vector<double> slice(int n) {
+		vector<double> a;
+		for (int i = 0; i < row; i++) {
+			a.push_back(val[i][n]);
+		}
+		return a;
+	}
+
 	double* operator[](int i) {
 		return val[i];
 	}
 
 private:
-
 	void init() {
 		for (int i = 0; i < row; i++) {
 			for (int j = 0; j < col; j++) {
@@ -82,12 +89,15 @@ private:
 
 void householder(Matrix & A);
 void givens(Matrix & A);
+void gram_schmidt1(Matrix & A);
+void gram_schmidt2(Matrix & A);
 int sgn(double a);
 Matrix operator*(Matrix A, Matrix B);
 Matrix operator*(double A, Matrix B);
 Matrix operator-(Matrix A, Matrix B);
 double norm2(vector<double> v);
 double dot(vector<double> v);
+double dot(vector<double> v1, vector<double> v2);
 
 int main() {
 	Matrix A(2, 2);
@@ -96,7 +106,7 @@ int main() {
 	A[1][0] = 2;
 	A[1][1] = 1;
 	A.print();
-
+	
 	Matrix B(2, 2);
 	B[0][0] = 1;
 	B[0][1] = 2;
@@ -124,7 +134,8 @@ int main() {
 	sam.print();
 
 	//householder(sam);
-	givens(sam);
+	//givens(sam);
+	gram_schmidt1(sam);
 	return 0;
 }
 
@@ -165,7 +176,7 @@ void givens(Matrix & A) {
 			double hyp = norm2(a);
 			double c = a[0] / hyp;
 			double s = a[1] / hyp;
-			
+
 			Matrix g(A.row);
 			g[j][j] = c;
 			g[j][i] = s;
@@ -178,6 +189,27 @@ void givens(Matrix & A) {
 			G.push_back(g);
 		}
 	}
+}
+
+void gram_schmidt1(Matrix & A) {
+	Matrix R(A.col, A.col);
+	Matrix Q(A.row, A.col);
+	for (int k = 0; k < A.col; k++) {
+		R[k][k] = norm2(A.slice(k));
+		vector<double> q(A.row);
+		for (int i = 0; i < A.row; i++) {
+			Q[i][k] = A[i][k] / R[k][k];
+			q[i] = Q[i][k];
+		}
+		for (int j = k + 1; j < A.col; j++) {
+			R[k][j] = dot(q, A.slice(j));
+			for (int i2 = 0; i2 < A.row; i2++) {
+				A[i2][j] -= R[k][j] * q[i2];
+			}
+		}
+	}
+	Q.print();
+	R.print();
 }
 
 Matrix operator*(Matrix A, Matrix B) {
@@ -232,6 +264,18 @@ double dot(vector<double> v) {
 	double dot = 0.0;
 	for (int i = 0; i < v.size(); i++) {
 		dot += pow(v[i], 2);
+	}
+	return dot;
+}
+
+double dot(vector<double> v1, vector<double> v2) {
+	if (v1.size() != v2.size()) {
+		cout << "ERROR: Computing dot product of incompatible vectors" << endl;
+		return 0;
+	}
+	double dot = 0.0;
+	for (int i = 0; i < v1.size(); i++) {
+		dot += v1[i] * v2[i];
 	}
 	return dot;
 }
